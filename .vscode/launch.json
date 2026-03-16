@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:AutoCodable}",
+            "name": "Debug AutoCodableClient",
+            "target": "AutoCodableClient",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug AutoCodableClient"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:AutoCodable}",
+            "name": "Release AutoCodableClient",
+            "target": "AutoCodableClient",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release AutoCodableClient"
+        }
+    ]
+}
