@@ -45,62 +45,67 @@ public struct AutoCodableMacro: MemberMacro, ExtensionMacro {
                 continue
             }
             
-            /// static 제거
+            /// static 제외
             if variable.modifiers.contains(where: { $0.name.text == "static" }) {
                 continue
             }
             
-            /// 변수 이름 추출
-            guard let binding = variable.bindings.first,
-                  let identifier = binding.pattern.as(IdentifierPatternSyntax.self)
-            else {
-                continue
-            }
-            
-            /// Swift 프로퍼티 이름
-            /// ex)  userProfileURL
-            let propertyName = identifier.identifier.text
-            
-            /// JSON key 이름
-            /// 기본값은 propertyName와 동일
-            var codingKey = propertyName
-            
-            // MARK: - Codable attribute 확인
-            /// 프로퍼티에 붙은 attribute 검사
-            /// ex) @CodableKey(name: "user_profile_url")
-            for attr in variable.attributes {
+            /// Swift에서는 `var a, b: Int` 처럼 하나의 변수 선언에 여러 프로퍼티가 포함될 수 있으므로 bindings 전체를 순회합니다
+            for binding in variable.bindings {
                 
-                guard let attribute = attr.as(AttributeSyntax.self) else {
+                // computed property 제외
+                if binding.accessorBlock != nil {
                     continue
                 }
                 
-                /// attribute 이름
-                let name = attribute.attributeName.description
-                    .trimmingCharacters(in: .whitespaces)
+                guard let identifier = binding.pattern.as(IdentifierPatternSyntax.self) else {
+                    continue
+                }
                 
-                /// CodableKey attribute 발견시
-                if name == "CodableKey" {
+                /// Swift 프로퍼티 이름
+                /// ex)  userProfileURL
+                let propertyName = identifier.identifier.text
+                
+                /// JSON key 이름
+                /// 기본값은 propertyName와 동일
+                var codingKey = propertyName
+                
+                // MARK: - Codable attribute 확인
+                /// 프로퍼티에 붙은 attribute 검사
+                /// ex) @CodableKey(name: "user_profile_url")
+                for attr in variable.attributes {
                     
-                    /// attribute argument 목록
-                    /// ex) name: "user_profile_url"
-                    if let arguments = attribute.arguments?.as(LabeledExprListSyntax.self),
-                       let first = arguments.first {
-                        
-                        /// JSON key 문자열 추출
-                        codingKey = first.expression.description
-                            .replacingOccurrences(of: "\"", with: "")
+                    guard let attribute = attr.as(AttributeSyntax.self) else {
+                        continue
                     }
                     
+                    /// attribute 이름
+                    let name = attribute.attributeName.description
+                        .trimmingCharacters(in: .whitespaces)
+                    
+                    /// CodableKey attribute 발견시
+                    if name == "CodableKey" {
+                        
+                        /// attribute argument 목록
+                        /// ex) name: "user_profile_url"
+                        if let arguments = attribute.arguments?.as(LabeledExprListSyntax.self),
+                           let first = arguments.first {
+                            
+                            /// JSON key 문자열 추출
+                            codingKey = first.expression.description
+                                .replacingOccurrences(of: "\"", with: "")
+                        }
+                    }
                 }
-            }
-            
-            // MARK: - Case 생성
-            if codingKey == propertyName {
-                /// case name
-                cases.append("    case \(propertyName)")
-            } else {
-                /// case userProfileURL = "user_profile_url"
-                cases.append("    case \(propertyName) = \"\(codingKey)\"")
+                
+                // MARK: - Case 생성
+                if codingKey == propertyName {
+                    /// case name
+                    cases.append("    case \(propertyName)")
+                } else {
+                    /// case userProfileURL = "user_profile_url"
+                    cases.append("    case \(propertyName) = \"\(codingKey)\"")
+                }
             }
         }
         

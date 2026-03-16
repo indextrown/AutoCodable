@@ -90,4 +90,90 @@ final class AutoCodableTests: XCTestCase {
             macros: testMacros
         )
     }
+    
+    func test_multi_binding_프로퍼티는_모두_CodingKeys에_포함된다() {
+        assertMacroExpansion(
+            """
+            @AutoCodable
+            struct Person {
+                var a, b: Int
+            }
+            """,
+            expandedSource:
+            """
+            struct Person {
+                var a, b: Int
+            
+                private enum CodingKeys: String, CodingKey {
+                    case a
+                    case b
+                }
+            }
+            
+            extension Person: Codable {
+            }
+            """,
+            macros: testMacros
+        )
+    }
+    
+    func test_computed_property는_CodingKeys에서_제외된다() {
+        assertMacroExpansion(
+            """
+            @AutoCodable
+            struct Person {
+                let name: String
+            
+                var upperNamr: String {
+                    name.uppercased()
+                }
+            }
+            """,
+            expandedSource:
+            """
+            struct Person {
+                let name: String
+
+                var upperNamr: String {
+                    name.uppercased()
+                }
+
+                private enum CodingKeys: String, CodingKey {
+                    case name
+                }
+            }
+            
+            extension Person: Codable {
+            }
+            """,
+            macros: testMacros
+        )
+    }
+    
+    func test_static_property는_CodingKeys에서_제외된다() {
+        assertMacroExpansion(
+            """
+            @AutoCodable
+            struct Person {
+                let name: String
+                static var cache: String
+            }
+            """,
+            expandedSource:
+            """
+            struct Person {
+                let name: String
+                static var cache: String
+
+                private enum CodingKeys: String, CodingKey {
+                    case name
+                }
+            }
+
+            extension Person: Codable {
+            }
+            """,
+            macros: testMacros
+        )
+    }
 }
