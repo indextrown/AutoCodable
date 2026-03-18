@@ -25,6 +25,12 @@
  - 실제 구현: AutoCodableMacros/AutoCodableMacro
  */
 
+
+public enum CodingKeyStyle: String {
+    case useDefault
+    case snakeCase
+}
+
 /**
  @AutoCodable
  struct Person {
@@ -38,7 +44,9 @@
 // 이 macro는 member를 생성하는데 그 이름은 CodingKeys이다
 @attached(member, names: named(CodingKeys))
 @attached(extension, conformances: Codable)
-public macro AutoCodable() = #externalMacro(
+public macro AutoCodable(
+    codingKeyStyle: CodingKeyStyle = .useDefault
+) = #externalMacro(
     module: "AutoCodableMacros",
     type: "AutoCodableMacro"
 )
@@ -80,3 +88,22 @@ public macro CodableKey(name: String) = #externalMacro(
 
  extension Person: Codable {}
  */
+
+//@AutoCodable(codingKeyStyle: .snakeCase)
+//struct User {
+//  let firstName: String
+//  let lastLogin: Date
+//}
+//
+//struct User {
+//  let firstName: String
+//  let lastLogin: Date
+//  
+//  private enum CodingKeys: String, CodingKey {
+//    case firstName = "first_name"
+//    case lastLogin = "last_login"
+//  }
+//}
+//
+//extension User: Codable {
+//}
